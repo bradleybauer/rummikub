@@ -1,7 +1,12 @@
-I am going to assume no jokers because adding them is a small change to the algorithm but I am not sure if I did it in an optimal way.
+I will describe a polynomial time algorithm that solves both problem 1 and problem 2. I learned of the algorithm from this [paper](https://arxiv.org/abs/1604.07553).
+
+I am going to make the following assumptions:
+1. No jokers (adding them is a small change).
+2. There are only four colors.
+3. There are at most two copies of each tile.
+4. The face values range from 1 to 13.
 
 To find the maximum value play, complete these steps:
-
 1. Recursively enumerate every valid configuration that can be built from tiles in $hand \cup board$
 2. Ignore any configuration where not all tiles from board used (the **board constraint**).
 3. Of the visited configurations, choose one with maximal score. Where score is the sum of values of tiles played or number of tiles played (whichever you prefer to maximize).
@@ -71,7 +76,8 @@ But this solves the same subproblem many times (compute score for sets common to
 Instead make use of the fact that we know at each step how many tiles of the current value we will play.
 Multiply this number of tiles by the current value to find how much these choices contribute to the score.
 Sum the contribution with the return value of the recursive call and then update the max if necessary.
-The recursive function should return the best answer found.
+Instead of updating a global max variable, we will update a local (available only in scope of recursive call) max variable which will hold the score of the best way to play tiles of the current value.
+The recursive function should return the max.
 After attempting to play tiles of current value in all ways, if no play leads to a valid configuration (every play violates the board constraint), then return $-\infty$.
 Returning $-\infty$ is useful because even if we have a high contribution (from runs & groups), adding that contribution to $-\infty$ is still $-\infty$.
 
@@ -80,23 +86,28 @@ Instead we set the contribution of such a run to 0.
 When a run is extended from length two to length three then we set it's contribution to the sum of the values of the three tiles in the run.
 When extending a run that has length at least three then the contribution is just the value of the tile played into the run.
 
+There are other things you can do here too. For example, I would like to find a configuration that is maximally similar to the configuration on the board.
+This can be done by maximizing score and then maximizing similarity. This would inflate the dp table size by two.
+
 State, Memoization, & Time Complexity
 =======
 The only state we need to know is the length of the runs that we can possibly extend and the current value.
-The length of runs can be recorded in a list of tuples of pairs, for example [(0,0), (0,0), (0,1), (0,3)], where the $i^{th}$ tuple is the length of the two possible runs of color $i$.
-The order of the numbers in the inner tuples does not matter so the above list is the same as [(0,0), (0,0), (1,0), (0,3)].
+The length of runs can be recorded in a list of pairs, for example [(0,0), (0,0), (0,1), (0,3)], where the $i^{th}$ pair is the length of the two possible runs of color $i$.
+The order of the numbers in the inner pairs does not matter so the above list is the same as [(0,0), (0,0), (1,0), (0,3)].
 A particular extension of those runs could be [(1,1), (0,1), (0,0), (1,3)].
 Also, we never need to know if the run is longer than three tiles (so an extension of (3,3) is (3,3)).
 We will only need to distinguish between when a run is of length 0, 1, 2, or 3.
 A benefit of this is the input space size is reduced which makes memoization much more effective.
 
-This algorithm is exponential in the number of distinct values in $rack \cup board$.
+This algorithm is exponential in the number of distinct values in $hand \cup board$.
 However it can be made linear by memoization.
 
 To memoize, store in a dictionary the key-value pair key=(currentTileValue, runLengthsList) and value=(max over (contribution + subproblemSolution)).
-Other inputs like the board and $rack\cup board$ are just used to bound the search and so we do not need to memoize them.
+Other inputs like the board and $hand\cup board$ are just used to bound the search and so we do not need to memoize them.
 
-For more details see the [paper](paper url) and my [implementation](impl url).
+
+Hopefully I have been able to effectively communicate most of the ideas of this algorithm.
+For more details see the [paper](https://arxiv.org/abs/1604.07553) and my [implementation](https://github.com/bradleybauer/rummikub/blob/master/Search.cxx).
 Note, the paper claims that the dynamic programming state space (number of unique inputs / max size of dp table needed, i think) is of size $n * k * f(m)$.
 Where $n$ is the number of possible tiles, $k$ is the number of colors, $m$ is the max number of copies of a tile, and $f(x)$ computes 4 choose $x$ with replacement.
 This might be a typo, I do not know.
@@ -104,5 +115,11 @@ In any case the state space of the algorithm I've described is $n * f(m)^k$.
 
 Note both the paper and my implementation refer to what you call the board as the table.
 
-There are other things you can do here too. For example, I would like to find a configuration that is maximally similar to the configuration on the board.
-This can be done by maximizing score and then maximizing similarity. This would inflate the dp table size by two.
+By the way, before learning of this algorithm, I tried to understand the algorithm you gave [here](https://cs.stackexchange.com/questions/85954/rummikub-algorithm/85971#85971).
+I could not understand how to deal with duplicates.
+I can see how breaking into sublists, ordering those sublists, and then combining them into a single list again would allow your recursive formula to handle duplicates for some inputs.
+But you did not describe how exactly to break the original list into sublists nor how to combine them into a single list again.
+For some inputs, your recursive formula will give different answers depending on how sublists are split/recombined.
+Unfortunately, I do not have enough stackoverflow reputation to comment on your answer to ask for clarification.
+Thanks for giving the answer though, your recursive formula is nice.
+
