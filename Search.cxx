@@ -80,7 +80,7 @@ void removeFromHand(const auto& runs, auto& hand, const int value) {
   }
 }
 
-// add the tiles played into runs this turn back into the hand
+// add the tiles played into runs back into the hand
 void addToHand(const auto& runs, auto& hand, const int value) {
   for (int color = -1; auto [a, b] : runs) {
     color += 1;
@@ -455,9 +455,9 @@ int _maxScore(const int value,                //
   return answer;
 }
 
-// We do not care about the order of the numbers in the inner tuples of RunsT.
-// But, order matters when we try to decipher what runs were played in the max score configuration.
-// This function makes sure that everything lines up correctly.
+// When solving for the max score configuration, we do not care about the order of the numbers in the inner tuples of RunsT.
+// But, order matters when we try to decipher what runs were played in the configuration.
+// This function makes sure that everything lines up correctly. lol.
 bool eq(const array<int, 2>& l, const array<int, 2>& r) { return l == r; }
 array<int, 2> getAlignedRun(auto run, auto nextRun) {
   // check easy case
@@ -548,7 +548,7 @@ tuple<int, PathT> maxScore(auto& table, auto& hand, const int numJokersOnTable,
       }
     }
   }
-  auto tiles = hand;
+  decltype(hand) tiles;
   for (int i = 0; i < K; ++i) {
     for (int j = 0; j < N; ++j) {
       tiles[i][j] = table[i][j] + hand[i][j];
