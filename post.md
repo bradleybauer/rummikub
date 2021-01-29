@@ -8,7 +8,7 @@ I am going to make the following assumptions:
 
 To find the maximum value play, complete these steps:
 1. Recursively enumerate every valid configuration that can be built from tiles in $hand \cup board$
-2. Ignore any configuration where not all tiles from board used (the **board constraint**).
+2. Ignore any configuration where not all tiles from board are used (the **board constraint**).
 3. Of the visited configurations, choose one with maximal score. Where score is the sum of values of tiles played or number of tiles played (whichever you prefer to maximize).
 
 Step 1
@@ -51,21 +51,21 @@ Note if we have played $n+m$ red 5's where $n$ is the number of red 5's in board
 If there is no way to play red 5's (including not playing red 5's) then this branch of the recursion tree does not lead to a valid configuration and we should return.
 
 However, these checks are not sufficient to guarantee we never violate the board constraint. Why?
-Because when forming runs for tiles of value 6 or 7 we can choose to not extend a run that has length one or two.
-The tiles in that run would have to be discarded which could violate the board constraint (for ex: not enough red 5's or red 6's).
+Because when forming runs using tiles of value 6 we can choose to not extend a run that has length one or two.
+The tiles in that run would have to be discarded which could violate the board constraint due to not having enough 4's or 5's.
 In this case we would not be able to catch this error because so far we only know how to check the board constraint for the current value.
 The way to fix this is to keep count of how many tiles we have played of the previous two values (for each color separately).
-Then when forming runs with red 7's we can check if not extending a red run (of length one or two) violates the board constraint.
+Then when forming runs with red 6's we can check if not extending a red run (of length one or two) puts us in a state where not enough red 4's or 5's have been played.
 Note that if a run has length at least three then not extending it does not force us to discard any tiles and so can not violate the board constraint (so we do not have to check in this case).
 
-We do not have to do anything special for choosing groups. In the following paragraph I will use 'configuration' to mean a set of groups.
-I will use 'maximal configuration' to mean a configuration containing the most tiles possible among all configurations where tiles come from some set $S$.
+We do not have to do anything special for choosing groups. In the following proof of this fact I will use 'configuration' to mean a set of groups.
+Also, I will use 'maximal configuration' to mean a configuration containing the most tiles possible among all configurations where tiles come from some set $S$.
 Note that if we have $n$ tiles of color $c$ in a configuration then there are at least $n$ groups in the configuration.
 Also if a subset of the available tiles can be arranged into a configuration of $n$ groups then a maximal configuration contains at least $n$ groups (there are at most three groups, if using two jokers, and at most two groups of four in any configuration).
 Now assume a subset $S$ of the available tiles can be arranged into a configuration with $n$ tiles of color $c$ and that we have arranged some maximal configuration $M$.
 If $M$ contains $k < n$ tiles of color $c$ then $M$ contains at least $n - k$ groups which do not contain a tile of color $c$ (groups of size three).
 In this case we can add $n-k$ tiles of color $c$ from $S$ to $n-k$ groups of three in $M$ which contradicts that $M$ is a maximal configuration.
-Thus $k=n$.
+Thus $k\geq n$.
 This shows that if there are $n$ tiles of color $c$ in the set of tiles of current value that remain after playing runs and if those $n$ tiles can be played in some configuration then every maximal configuration contains those $n$ tiles.
 So choosing a maximal group guarantees that we satisfy the board constraint if it is possible to satisfy the board constraint by playing groups.
 
@@ -77,33 +77,33 @@ Instead make use of the fact that we know at each step how many tiles of the cur
 Multiply this number of tiles by the current value to find how much these choices contribute to the score.
 Sum the contribution with the return value of the recursive call and then update the max if necessary.
 Instead of updating a global max variable, we will update a local (available only in scope of recursive call) max variable which will hold the score of the best way to play tiles of the current value.
-The recursive function should return the max.
+The recursive function should return the value of this max variable.
 After attempting to play tiles of current value in all ways, if no play leads to a valid configuration (every play violates the board constraint), then return $-\infty$.
 Returning $-\infty$ is useful because even if we have a high contribution (from runs & groups), adding that contribution to $-\infty$ is still $-\infty$.
 
-Note that we cannot know the contribution of a length one or length two run because we may choose to not extend such a run and so the tiles would be discarded.
-Instead we set the contribution of such a run to 0.
-When a run is extended from length two to length three then we set it's contribution to the sum of the values of the three tiles in the run.
+Note that we cannot know the contribution of extending a length zero or length one run. This is because, when playing tiles of the next greater value, we may choose to not extend a run of length one or two and so the tiles in those runs would be discarded.
+Instead we say the contribution of extending a length zero run (starting a run) or length one run is 0.
+When a run is extended from length two to length three then we say it's contribution is the sum of the values of the three tiles in the run.
 When extending a run that has length at least three then the contribution is just the value of the tile played into the run.
 
-There are other things you can do here too. For example, I would like to find a configuration that is maximally similar to the configuration on the board.
-This can be done by maximizing score and then maximizing similarity. This would inflate the dp table size by two.
+There are other things you can do here too. For example, It may be desireable to find a configuration that is maximally similar to the previous configuration of the board.
+This can be done by maximizing score and then maximizing some similarity function. This would inflate the dp table size by two.
 
 State, Memoization, & Time Complexity
 =======
-The only state we need to know is the length of the runs that we can possibly extend and the current value.
+The only state we need to know is the current value and the length of the runs that we could possibly extend.
 The length of runs can be recorded in a list of pairs, for example [(0,0), (0,0), (0,1), (0,3)], where the $i^{th}$ pair is the length of the two possible runs of color $i$.
-The order of the numbers in the inner pairs does not matter so the above list is the same as [(0,0), (0,0), (1,0), (0,3)].
-A particular extension of those runs could be [(1,1), (0,1), (0,0), (1,3)].
-Also, we never need to know if the run is longer than three tiles (so an extension of (3,3) is (3,3)).
+The order of the numbers in the pairs does not matter so the above state is the same as [(0,0), (0,0), (1,0), (0,3)].
+A particular extension (i.e. child state) of those runs could be [(1,1), (0,1), (0,0), (1,3)].
+Also, we never need to know if a run is longer than three tiles (so an extension of (3,3) is (3,3)).
 We will only need to distinguish between when a run is of length 0, 1, 2, or 3.
-A benefit of this is the input space size is reduced which makes memoization much more effective.
+A benefit of this is the size of the state space is reduced which makes memoization much more effective.
 
 This algorithm is exponential in the number of distinct values in $hand \cup board$.
 However it can be made linear by memoization.
 
-To memoize, store in a dictionary the key-value pair key=(currentTileValue, runLengthsList) and value=(max over (contribution + subproblemSolution)).
-Other inputs like the board and $hand\cup board$ are just used to bound the search and so we do not need to memoize them.
+To memoize, store in a dictionary the key-value pair key=(currentTileValue, runLengthsList) and value=localMaxValue.
+Other inputs like the board, $hand\cup board$, number of jokers available, number of tiles played per color on the last two turns, etc, are just used to bound the search and so we do not need to memoize them.
 
 
 Hopefully I have been able to effectively communicate most of the ideas of this algorithm.
