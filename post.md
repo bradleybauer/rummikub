@@ -108,7 +108,7 @@ Other inputs like the board, $hand\cup board$, number of jokers available, numbe
 
 Hopefully I have been able to effectively communicate most of the ideas of this algorithm.
 For more details see the [paper](https://arxiv.org/abs/1604.07553) and my [implementation](https://github.com/bradleybauer/rummikub/blob/master/Search.cxx).
-Note, the paper claims that the dynamic programming state space (number of unique inputs / max size of dp table needed, i think) is of size $n * k * f(m)$.
+Note, the paper claims that the dynamic programming state space (number of unique inputs, max size of dp table needed, i think) is of size $n * k * f(m)$.
 Where $n$ is the number of possible tiles, $k$ is the number of colors, $m$ is the max number of copies of a tile, and $f(x)$ computes 4 choose $x$ with replacement.
 This might be a typo, I do not know.
 In any case the state space of the algorithm I've described is $n * f(m)^k$.
